@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/Users/Esh/anaconda3/bin/python
 """
 Scaffold a project directory quickly and put it under version control with reasonable defaults.
 """
