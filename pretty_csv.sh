@@ -22,5 +22,5 @@ elif [ "$1" == "--help" ] || [ $# -eq 0 ]; then
 	# help
 	printf "Display a csv file in the terminal nicely with interactive pagination.\n\nUsage csv file.csv\n\nOptional flags:\n-h print the Head of the file (first 10 rows)\n-s print the Shape and column names\n-t prepend to other flags (e.g. -th) to force Tab-separated file reading; try it if output looks wonky\n"
 else	
-	perl -pe 's/((?<=,)|(?<=^)),/ ,/g;' "$1" | column -t -s, | exec less  -F -S -X -K
+	perl -pe 's/((?<=,)|(?<=^)),/ ,/g;' "$1" | column -t -s, | exec less  -F -S -X -K -N
 fi
