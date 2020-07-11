@@ -2,46 +2,33 @@
 
 # Pretty display a csv file in the terminal
 # Relies on visidata https://jsvine.github.io/intro-to-visidata/the-big-picture/installation/
-# pip install visidata
+# And csvkit https://csvkit.readthedocs.io/en/latest/index.html
+# pip install visidata csvkit
 # Aliased to csv [filename]
-if [ "$1" == "-h" ]; then
-    filename=$(basename -- $2)
-    extension="${filename##*.}"
-    head -n 10 $2 | vd -f $extension
- elif [ "$1" == "-s" ]; then
- 	# Get the shape of the csv file
-    filename=$(basename -- $2)
-    extension="${filename##*.}"
-    if [ "$extension" == "csv" ]; then
-        awk -F, 'END {printf "NRows: %s\nNCols: %s\nColNames: ", NR, NF}' "$2" && awk -F, 'NR==1 {print; exit}' "$2"
-    else
-        awk -F\t 'END {printf "NRows: %s\nNCols: %s\nColNames: ", NR, NF}' "$2" && awk -F\t 'NR==1 {print; exit}' "$2"
-    fi
-elif [ "$1" == "--help" ] || [ $# -eq 0 ]; then
-    printf "Display a csv file in the terminal nicely with interactive pagination.\n\nUsage csv file.csv\n\nOptional flags:\n-h print the Head of the file (first 10 rows)\n-s print the Shape and column names\n-t prepend to other flags (e.g. -th) to force Tab-separated file reading; try it if output looks wonky\n"
-else 
+if [ "$1" == "--help" ] || [ $# -eq 0 ]; then
+    printf "Display a csv file in the terminal nicely with interactive pagination.\n\nUsage csv file.csv\n\nOptional flags:\n-h print the head of the file (first 10 rows)\n-s print the shape and column names\n-u file colname, searchable unique values in colname\n-n check for null values in any column\n\nAlso checkout csvkit with the commands\ncsvcut\ncsvlook\ncsvlook file | fzf --reverse (searchable contents)\ncsvstat\ncsvstat file -c colname (stats for colname, e.g. --unique or omit for all stats)\n\nAs well as docs for visidata for aggregation and basic plotting:\nhttps://www.visidata.org/docs/\n"
+elif [ $# -eq 1 ]; then
     vd $1
+else
+    filename=$(basename -- $2)
+    extension="${filename##*.}"
+    if [ "$1" == "-h" ]; then
+        csvlook $filename --max-rows 10
+    # head -n 10 $2 | vd -f $extension
+     elif [ "$1" == "-s" ]; then
+        # Get the shape of the csv file
+        if [ "$extension" == "csv" ]; then
+            awk -F, 'END {printf "Shape: (%s, %s)\nColumns:\n", NR, NF}' $filename && csvcut -n $filename
+        else
+            awk -F\t 'END {printf "Shape: (%s, %s)\nColumns:\n", NR, NF}' $filename && csvcut -n $filename
+        fi
+    # search able unique vals in col
+    elif [ "$1" == "-u" ]; then
+        csvcut $filename -c $3 | tail -n +2 | sort | uniq | fzf --reverse
+    elif [ "$1" == "-n" ]; then
+        csvstat $filename --null
+    else
+        echo 'Unknown args requested'
+        exit 1
+    fi
 fi
-
-# Code below has no deps but is clunkier
-# if [ "$1" == "-t" ]; then
-# 	# Force reading filing as tab-separated (usually not needed)
-# 	perl -pe 's/((?<=\t)|(?<=^))\t/ \t/g;' "$2" | column -t -s $'\t' | exec less  -F -S -X -K
-# elif [ "$1" == "-th" ]; then
-# 	# -t but print first 10 lines only
-# 	perl -pe 's/((?<=\t)|(?<=^))\t/ \t/g;' "$2" | column -t -s $'\t' | exec head -n 10
-# elif [ "$1" == "-ts" ]; then
-# 	# -t but get the shape of the csv file
-# 	awk -F\t 'END {printf "NRows: %s\nNCols: %s\nColNames: ", NR, NF}' "$2" && awk -F\t 'NR==1 {print; exit}' "$2"
-# elif [ "$1" == "-h" ]; then
-# 	# Assume reading as comma-separated and print first 10 lines only
-# 	perl -pe 's/((?<=,)|(?<=^)),/ ,/g;' "$2" | column -t -s, | exec head -n 10
-# elif [ "$1" == "-s" ]; then
-# 	# Get the shape of the csv file
-# 	awk -F, 'END {printf "NRows: %s\nNCols: %s\nColNames: ", NR, NF}' "$2" && awk -F, 'NR==1 {print; exit}' "$2"
-# elif [ "$1" == "--help" ] || [ $# -eq 0 ]; then
-# 	# help
-# 	printf "Display a csv file in the terminal nicely with interactive pagination.\n\nUsage csv file.csv\n\nOptional flags:\n-h print the Head of the file (first 10 rows)\n-s print the Shape and column names\n-t prepend to other flags (e.g. -th) to force Tab-separated file reading; try it if output looks wonky\n"
-# else	
-# 	perl -pe 's/((?<=,)|(?<=^)),/ ,/g;' "$1" | column -t -s, | exec less  -F -S -X -K -N
-# fi
