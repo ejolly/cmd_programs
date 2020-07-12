@@ -6,10 +6,38 @@
 # pip install visidata csvkit
 # Aliased to csv [filename]
 if [ "$1" == "--help" ] || [ $# -eq 0 ]; then
-    printf "Display a csv file in the terminal nicely with interactive pagination.\n\nUsage csv file.csv\n\nOptional flags:\n-h print the head of the file (first 10 rows)\n-s print the shape and column names\n-u file colname, searchable unique values in colname\n-n check for null values in any column\n\nAlso checkout csvkit with the commands\ncsvcut\ncsvlook\ncsvlook file | fzf --reverse (searchable contents)\ncsvstat\ncsvstat file -c colname (stats for colname, e.g. --unique or omit for all stats)\n\nAs well as docs for visidata for aggregation and basic plotting:\nhttps://www.visidata.org/docs/\n"
+    echo "
+    Get basic stats or interactively display a csv file in the terminal
+
+    Usage: csv filename
+
+    Options:
+        -h      print the first 10 rows of the file
+        -s      print the number of rows, columns, and column names
+        -n      check for null values in any column
+        -i      fuzzy searchable file contents 
+        -d      describe all columns; pass in colname,colname2... to describe specific columns
+        -u      [column] searchable unique values in column
+
+    Also checkout csvkit:
+        csvcut      extract specific info from csv file
+        csvlook     pretty print file contents (non-interactive)
+        csvstat     column-wise statistics
+
+    And visidata:
+       It's used for the interactive display when no flags are passed.
+       It can do basic data aggregation and plotting.
+    Docs:
+        https://www.visidata.org/docs/
+    "
 elif [ $# -eq 1 ]; then
-    vd $1
-else
+    if [[ "$1" == "-"* ]]; then
+        echo "file name required"
+        exit 1
+    else
+        vd $1
+    fi
+elif [ $# -eq 2 ]; then
     filename=$(basename -- $2)
     extension="${filename##*.}"
     if [ "$1" == "-h" ]; then
@@ -22,13 +50,35 @@ else
         else
             awk -F\t 'END {printf "Shape: (%s, %s)\nColumns:\n", NR, NF}' $filename && csvcut -n $filename
         fi
-    # search able unique vals in col
-    elif [ "$1" == "-u" ]; then
-        csvcut $filename -c $3 | tail -n +2 | sort | uniq | fzf --reverse
     elif [ "$1" == "-n" ]; then
         csvstat $filename --null
+    elif [ "$1" == "-i" ]; then
+        csvlook $filename | fzf --reverse
+    elif [ "$1" == "-d" ]; then
+        csvstat $filename
+    elif [ "$1" == "-u" ]; then
+        echo "
+        column name required
+        Usage:
+            csv -u [column] [file]
+        "
     else
         echo 'Unknown args requested'
         exit 1
     fi
+elif [ $# -eq 3 ]; then
+    filename=$(basename -- $3)
+    extension="${filename##*.}"
+    colname=$2
+    if [ "$1" == "-u" ]; then
+        csvcut $filename -c $colname | tail -n +2 | sort | uniq | fzf --reverse
+    elif [ "$1" == "-d" ]; then
+        csvstat -c $colname $filename
+    else
+        echo 'Unknown args requested'
+        exit 1
+    fi
+else
+    echo 'Too many arguments passed!'
+    exit 1
 fi
