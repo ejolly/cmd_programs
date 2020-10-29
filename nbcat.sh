@@ -25,4 +25,5 @@ if [ ! -f "$1" ]; then
     exit $EX_NOINPUT
 fi
 
-jupyter nbconvert --stdout --to markdown "$1" 2>/dev/null | pandoc -f markdown_mmd -t html | lynx -stdin -vikeys
+jupyter nbconvert --stdout --to markdown "$1" 2>/dev/null | bat -l markdown --theme=TwoDark
+# jupyter nbconvert --stdout --to markdown "$1" 2>/dev/null | pandoc -f markdown_mmd -t html | lynx -stdin -vikeys
