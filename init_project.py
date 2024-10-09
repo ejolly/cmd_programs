@@ -1,4 +1,4 @@
-#!/Users/Esh/anaconda3/bin/python
+#!/Users/esh/miniconda3/bin/python
 """
 Scaffold a project directory quickly and put it under version control with reasonable defaults.
 """
@@ -34,9 +34,9 @@ abs_project_path = os.path.join(base_dir, project_name)
 # Make dir structure
 print("Setting up project...")
 call_string = (
-    "mkdir -p "
-    + abs_project_path
-    + "/{analysis,data,papers,presentations,code,figures,paradigms,.vscode};"
+    f"mkdir -p {abs_project_path}/analysis {abs_project_path}/data {abs_project_path}/papers "
+    f"{abs_project_path}/presentations {abs_project_path}/code {abs_project_path}/figures "
+    f"{abs_project_path}/paradigms {abs_project_path}/.vscode;"
 )
 sys_call(call_string)
 
@@ -92,7 +92,7 @@ vscode_file.close()
 # CD to project dir
 os.chdir(abs_project_path)
 # Create gitkeep files to commit empty dir structure
-call_string = "find * -type d -not -path '*/\.*' -exec touch {}/.gitkeep \;"
+call_string = r"find * -type d -not -path '*/\.*' -exec touch {}/.gitkeep \;"
 sys_call(call_string)
 # Initialize repo
 sys_call("git init")
